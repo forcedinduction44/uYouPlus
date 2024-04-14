@@ -105,14 +105,23 @@ jobs:
       - name: Prepare YouTube iPA
         id: prepare_youtube
         run: |
-          wget "$YOUTUBE_URL" --no-verbose -O main/YouTube.ipa
-          cd ${{ github.workspace }}/main
+          wget "$YOUTUBE_URL" -O main/YouTube.ipa
+          if [ $? -ne 0 ] || [ ! -s main/YouTube.ipa ]; then
+              echo "Download failed or file is empty"
+              exit 1
+          fi
+          cd /Users/runner/work/uYouPlus/uYouPlus/main
           mv YouTube.ipa YouTube.zip
           unzip -q YouTube.zip
+          if [ $? -ne 0 ]; then
+              echo "Unzip failed"
+              exit 1
+          fi
           youtube_version=$(defaults read "$(pwd)/Payload/YouTube.app/Info" CFBundleVersion)
           echo "==> YouTube v$youtube_version downloaded!"
           sed -i '' "17s#.*#YOUTUBE_VERSION = ${youtube_version}#g" Makefile
           echo "youtube_version=${youtube_version}" >> $GITHUB_OUTPUT
+
 
         env:
           THEOS: ${{ github.workspace }}/theos
